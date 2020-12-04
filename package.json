@@ -13,7 +13,7 @@
     "test:watch": "nodemon --watch modules/**/*.js --exec \"npm test\"",
     "format:write": "prettier --write **/*.{json,md} !package.json",
     "format:test": "prettier **/*.{json,md} --list-different",
-    "start": "nodemon --inspect dist/.",
+    "start": "nodemon --inspect --exec ts-node dist/.",
     "start:prod": "pm2 start ecosystem.config.js",
     "stop": "pm2 stop all",
     "restart": "pm2 restart all",
