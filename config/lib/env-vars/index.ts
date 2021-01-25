@@ -3,10 +3,11 @@ import { resolve } from 'path';
 import { promisify } from 'util';
 import { parse } from 'dotenv';
 import Ajv from 'ajv';
+import debugImport from 'debug';
+import Field from './field';
+import envSchema from './field.schema.json';
 
-const debug = require('debug')('app:helpers:utils:env');
-const Field = require('./field');
-const envSchema = require('./field.schema');
+const debug = debugImport('app:helpers:utils:env');
 const ajv = new Ajv();
 const validate = ajv.compile(envSchema);
 const readFile$ = promisify(readFile);

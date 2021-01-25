@@ -2,6 +2,7 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.init = exports.initErrorRoutes = exports.initI18n = exports.createServer = exports.initModulesServerRoutes = exports.initHelmetHeaders = exports.initModulesConfiguration = exports.initSession = exports.initViewEngine = exports.initMiddleware = exports.runBootstrap = exports.initLocalVariables = void 0;
 const fs_1 = require("fs");
@@ -22,16 +23,16 @@ const morgan_1 = __importDefault(require("morgan"));
 const helmet_1 = __importDefault(require("helmet"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = require("path");
+const __1 = __importDefault(require(".."));
 const i18nextMiddleware = require('i18next-http-middleware');
 const debug = require('debug')('app:config:express');
 const MongoStore = require('connect-mongo')(express_session_1.default);
-const config = require('..');
 const logger = require('./logger');
 const { init: initSocketIO } = require('./socket.io');
-const { vendor, custom } = config.files.server.modules;
+const { vendor, custom } = (_a = __1.default.files) === null || _a === void 0 ? void 0 : _a.server.modules;
 const initLocalVariables = (app) => {
     const { locals } = app;
-    const { secure } = config.app;
+    const { secure } = __1.default.app;
     if (secure.ssl === true) {
         locals.secure = secure.ssl;
     }
@@ -43,12 +44,13 @@ const initLocalVariables = (app) => {
 };
 exports.initLocalVariables = initLocalVariables;
 const runBootstrap = (app, db) => {
-    const promises = config.files.server.bootstraps.map(async (f) => {
+    var _a;
+    const promises = (_a = __1.default.files) === null || _a === void 0 ? void 0 : _a.server.bootstraps.map(async (f) => {
         const m = require(path_1.resolve(f));
         if (typeof m === 'function') {
             try {
                 debug('Bootstraping file %s', f);
-                await m(config, app, db);
+                await m(__1.default, app, db);
                 debug('file "%s" executed successfully', f);
             }
             catch (e) {
@@ -84,11 +86,11 @@ const initMiddleware = (app) => {
     app.use(cookie_parser_1.default());
     app.use(connect_flash_1.default());
     app.use('/assets', express_1.default.static('assets'));
-    app.use(express_1.default.static(config.app.webFolder));
-    if (config.app.cors.enabled) {
+    app.use(express_1.default.static(__1.default.app.webFolder));
+    if (__1.default.app.cors.enabled) {
         app.use(cors_1.default({
-            credentials: config.app.cors.credentials,
-            origin: config.app.cors.origin,
+            credentials: __1.default.app.cors.credentials,
+            origin: __1.default.app.cors.origin,
         }));
     }
 };
@@ -102,7 +104,7 @@ const initViewEngine = (app) => {
 };
 exports.initViewEngine = initViewEngine;
 const initSession = (app) => {
-    const { cookie, name, secret, collection } = config.session;
+    const { cookie, name, secret, collection } = __1.default.session;
     app.use(express_session_1.default({
         saveUninitialized: true,
         resave: true,
@@ -117,8 +119,9 @@ const initSession = (app) => {
 };
 exports.initSession = initSession;
 const initModulesConfiguration = (app, db) => {
-    config.files.server.configs.forEach((configPath) => {
-        require(path_1.resolve(configPath))(app, db, config);
+    var _a;
+    (_a = __1.default.files) === null || _a === void 0 ? void 0 : _a.server.configs.forEach((configPath) => {
+        require(path_1.resolve(configPath))(app, db, __1.default);
     });
 };
 exports.initModulesConfiguration = initModulesConfiguration;
@@ -131,20 +134,21 @@ const initHelmetHeaders = (app) => {
 };
 exports.initHelmetHeaders = initHelmetHeaders;
 const initModulesServerRoutes = (app) => {
-    config.files.server.routes.forEach((routePath) => {
+    var _a;
+    (_a = __1.default.files) === null || _a === void 0 ? void 0 : _a.server.routes.forEach((routePath) => {
         const m = require(path_1.resolve(routePath));
         if (typeof m === 'function') {
             m(app);
         }
         else {
-            app.use(config.app.prefix + m.prefix, m.router(app));
+            app.use(__1.default.app.prefix + m.prefix, m.router(app));
         }
     });
 };
 exports.initModulesServerRoutes = initModulesServerRoutes;
 const createServer = (app) => {
     let server;
-    const { secure } = config.app;
+    const { secure } = __1.default.app;
     if (secure.ssl === true) {
         const privateKey = fs_1.readFileSync(path_1.resolve(secure.privateKey), 'utf8');
         const certificate = fs_1.readFileSync(path_1.resolve(secure.certificate), 'utf8');
@@ -194,7 +198,7 @@ const createServer = (app) => {
 };
 exports.createServer = createServer;
 const initI18n = (app) => {
-    const lngDetector = new i18nextMiddleware.LanguageDetector(null, config.i18next.detector);
+    const lngDetector = new i18nextMiddleware.LanguageDetector(null, __1.default.i18next.detector);
     const getDirsNames = () => {
         const modules = [vendor, ...custom];
         const names = modules.map((source) => fs_1.readdirSync(source)
@@ -211,7 +215,7 @@ const initI18n = (app) => {
     i18next_1.default
         .use(i18next_fs_backend_1.default)
         .use(lngDetector)
-        .init(Object.assign(Object.assign({}, config.i18next.init), { ns: getDirsNames() }));
+        .init(Object.assign(Object.assign({}, __1.default.i18next.init), { ns: getDirsNames() }));
     app.use(i18nextMiddleware.handle(i18next_1.default));
 };
 exports.initI18n = initI18n;

@@ -8,11 +8,12 @@ const path_1 = require("path");
 const util_1 = require("util");
 const dotenv_1 = require("dotenv");
 const ajv_1 = __importDefault(require("ajv"));
-const debug = require('debug')('app:helpers:utils:env');
-const Field = require('./field');
-const envSchema = require('./field.schema');
+const debug_1 = __importDefault(require("debug"));
+const field_1 = __importDefault(require("./field"));
+const field_schema_json_1 = __importDefault(require("./field.schema.json"));
+const debug = debug_1.default('app:helpers:utils:env');
 const ajv = new ajv_1.default();
-const validate = ajv.compile(envSchema);
+const validate = ajv.compile(field_schema_json_1.default);
 const readFile$ = util_1.promisify(fs_1.readFile);
 const writeFile$ = util_1.promisify(fs_1.writeFile);
 const DEFAULT_ENV = process.env.NODE_ENV || 'development';
@@ -105,7 +106,7 @@ ERROR : ${JSON.stringify(e)}`);
     set({ key, link, value, field, group, name = key, defaultValue, description = '', }, schema = { type: 'string' }, scope = 'general') {
         let variable = this.variables.find((v) => v.scope === scope && v.key === key);
         if (!variable) {
-            variable = Field.create({
+            variable = field_1.default.create({
                 key,
                 name,
                 link,

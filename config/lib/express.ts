@@ -24,15 +24,15 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
 import { resolve, join } from 'path';
+import config from '..';
 
 const i18nextMiddleware = require('i18next-http-middleware');
 const debug = require('debug')('app:config:express');
 const MongoStore = require('connect-mongo')(session);
-const config = require('..');
 const logger = require('./logger');
 const { init: initSocketIO } = require('./socket.io');
 
-const { vendor, custom } = config.files.server.modules;
+const { vendor, custom } = (config as any).files?.server.modules;
 
 /**
  * Initialize local variables
@@ -56,7 +56,7 @@ type initErrorRoutesParam = {
 
 export const initLocalVariables = (app: initLocalVariablesAppParam) => {
   const { locals } = app;
-  const { secure } = config.app;
+  const { secure } = (config as any).app;
 
   // Setting application local variables
   if (secure.ssl === true) {
@@ -75,7 +75,7 @@ export const initLocalVariables = (app: initLocalVariablesAppParam) => {
  * Run bootstrap files
  */
 export const runBootstrap = (app: any, db: any) => {
-  const promises = config.files.server.bootstraps.map(async (f: string) => {
+  const promises = (config as any).files?.server.bootstraps.map(async (f: string) => {
     // eslint-disable-next-line import/no-dynamic-require,global-require
     const m = require(resolve(f));
 
@@ -137,13 +137,13 @@ export const initMiddleware = (app: initMiddlewareAppParam) => {
   app.use(cookieParser());
   app.use(flash());
   app.use('/assets', express.static('assets'));
-  app.use(express.static(config.app.webFolder));
+  app.use(express.static((config as any).app.webFolder));
 
-  if (config.app.cors.enabled) {
+  if ((config as any).app.cors.enabled) {
     app.use(
       cors({
-        credentials: config.app.cors.credentials,
-        origin: config.app.cors.origin,
+        credentials: (config as any).app.cors.credentials,
+        origin: (config as any).app.cors.origin,
       }),
     );
   }
@@ -166,7 +166,7 @@ export const initViewEngine = (app: initViewEngineParam) => {
  * Configure Express session
  */
 export const initSession = (app: any) => {
-  const { cookie, name, secret, collection } = config.session;
+  const { cookie, name, secret, collection } = (config as any).session;
 
   // Express MongoDB session storage
   app.use(
@@ -191,7 +191,7 @@ export const initSession = (app: any) => {
  * Invoke modules server configuration
  */
 export const initModulesConfiguration = (app: any, db: any) => {
-  config.files.server.configs.forEach((configPath: string) => {
+  (config as any).files?.server.configs.forEach((configPath: string) => {
     // eslint-disable-next-line import/no-dynamic-require,global-require
     require(resolve(configPath))(app, db, config);
   });
@@ -216,20 +216,20 @@ export const initHelmetHeaders = (app: initHelmetHeadersParam) => {
  */
 export const initModulesServerRoutes = (app: initModulesServerRoutesParam) => {
   // Globbing routing files
-  config.files.server.routes.forEach((routePath: string) => {
+  (config as any).files?.server.routes.forEach((routePath: string) => {
     // eslint-disable-next-line import/no-dynamic-require,global-require
     const m = require(resolve(routePath));
     if (typeof m === 'function') {
       m(app);
     } else {
-      app.use(config.app.prefix + m.prefix, m.router(app));
+      app.use((config as any).app.prefix + m.prefix, m.router(app));
     }
   });
 };
 
 export const createServer = (app: RequestListener | undefined) => {
   let server;
-  const { secure } = config.app;
+  const { secure } = (config as any).app;
   if (secure.ssl === true) {
     // Load SSL key and certificate
     const privateKey = readFileSync(resolve(secure.privateKey), 'utf8');
@@ -289,7 +289,10 @@ export const createServer = (app: RequestListener | undefined) => {
  * Configure i18n
  */
 export const initI18n = (app: initI18nParam) => {
-  const lngDetector = new i18nextMiddleware.LanguageDetector(null, config.i18next.detector);
+  const lngDetector = new i18nextMiddleware.LanguageDetector(
+    null,
+    (config as any).i18next.detector,
+  );
 
   const getDirsNames = () => {
     const modules = [vendor, ...custom];
@@ -314,7 +317,7 @@ export const initI18n = (app: initI18nParam) => {
     .use(Backend)
     .use(lngDetector)
     .init({
-      ...config.i18next.init,
+      ...(config as any).i18next.init,
       ns: getDirsNames(),
     });
 
