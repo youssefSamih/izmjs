@@ -7,16 +7,28 @@ const { promisify } = require('util');
 const ajvErrors = require('ajv-errors');
 const sockets = require('@config/lib/socket.io');
 
-const roleCache = {};
-let excludeCache;
+const roleCache: any = {};
+let excludeCache: any[];
 const readFile$ = promisify(readFile);
 
+type reqParams = { query: any; body: any; t: (arg0: any) => any };
+type resParams = {
+  status: (
+    arg0: number,
+  ) => {
+    (): any;
+    new (): any;
+    json: { (arg0: { success: boolean; result: any }): any; new (): any };
+  };
+};
+
+type isExcluded = { iam: object; parents: any[] };
 /**
  * Validates a payload with a given schema
  * @param {Object} schema The schema of the payload
  */
-exports.validate = (schema, type = 'body') =>
-  async function validateSchema(req, res, next) {
+exports.validate = (schema: object, type = 'body') =>
+  async function validateSchema(req: reqParams, res: resParams, next: () => any) {
     const ajv = new Ajv({ allErrors: true, jsonPointers: true });
     ajvErrors(ajv);
 
@@ -38,7 +50,7 @@ exports.validate = (schema, type = 'body') =>
 
     return res.status(400).json({
       success: false,
-      result: validate.errors.map((err) => ({
+      result: validate.errors.map((err: { message: any; params: any }) => ({
         message: req.t(err.message),
         data: err.params,
       })),
@@ -49,8 +61,16 @@ exports.validate = (schema, type = 'body') =>
  * Check current user has IAM
  * @param {Object} iam the IAM to check
  */
-exports.hasIAM = (iam) =>
-  async function hasIAM(req, res, next) {
+exports.hasIAM = (iam: any) =>
+  async function hasIAM(
+    req: { iams: any },
+    res: {
+      status: (
+        arg0: number,
+      ) => { (): any; new (): any; json: { (arg0: { message: string }): any; new (): any } };
+    },
+    next: (arg0: undefined) => any,
+  ) {
     const IAM = model('IAM');
     const { iams } = req;
     let count;
@@ -64,18 +84,18 @@ exports.hasIAM = (iam) =>
     if (count <= 0) return res.status(404).json({ message: `Permission(IAM) ${iam} not found` });
 
     // Check if the user has the permission.
-    if (iams.find((el) => el.iam === iam) === undefined) {
+    if (iams.find((el: { iam: any }) => el.iam === iam) === undefined) {
       return res.status(403).json({ message: `You don't have permission ${iam} to continue` });
     }
 
-    return next();
+    return next(undefined);
   };
 
 /**
  * Gets the base URL of the request
  * @param {IncomingMessage} req The request
  */
-exports.getBaseURLFromRequest = (req) => {
+exports.getBaseURLFromRequest = (req: { get: (arg0: string) => any; protocol: any }) => {
   const protocol = req.get('x-forwarded-proto') || req.protocol;
   return `${protocol}://${req.get('host')}`;
 };
@@ -93,7 +113,7 @@ exports.createUser = async (
   },
   iams = ['users:auth:signin'],
   name = 'role-tests',
-  opts = {},
+  opts: any = {},
 ) => {
   const IAM = model('IAM');
   const User = model('User');
@@ -143,7 +163,7 @@ exports.createUser = async (
  * Check an IAM if it is exluded or not
  * @param {Object} iam The IAM object
  */
-exports.isExcluded = async ({ iam, parents = [] }) => {
+exports.isExcluded = async ({ iam, parents = [] }: isExcluded) => {
   if (process.env.NODE_ENV === 'test') {
     return {
       found: false,
@@ -194,7 +214,7 @@ exports.isExcluded = async ({ iam, parents = [] }) => {
  * @param { Array[String] } roles List of roles
  * @param { Number } tries Number of tries
  */
-exports.addIamToRoles = async (iamName, roles = ['guest', 'user'], tries = 100) => {
+exports.addIamToRoles = async (iamName: any, roles = ['guest', 'user'], tries = 100) => {
   const Role = model('Role');
   const Iam = model('IAM');
 

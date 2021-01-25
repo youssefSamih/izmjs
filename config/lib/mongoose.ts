@@ -8,9 +8,9 @@ const mongoose = require('mongoose');
 const config = require('..');
 
 // Load the mongoose models
-module.exports.loadModels = (callback) => {
+module.exports.loadModels = (callback: () => void) => {
   // Globbing model files
-  config.files.server.models.forEach((modelPath) => {
+  config.files.server.models.forEach((modelPath: any) => {
     require(path.resolve(modelPath));
   });
 
@@ -18,7 +18,7 @@ module.exports.loadModels = (callback) => {
 };
 
 // Initialize Mongoose
-module.exports.connect = (callback) => {
+module.exports.connect = (callback: (arg0: any) => void) => {
   mongoose.Promise = global.Promise;
 
   mongoose
@@ -35,13 +35,13 @@ module.exports.connect = (callback) => {
       // Call callback FN
       if (callback) callback(mongoose.connection.db);
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.error(chalk.red('Could not connect to MongoDB!'));
       console.error(err);
     });
 };
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (err: any) => {
   console.error(err);
   if (err.name === 'MongoError' && err.codeName === 'DuplicateKey') {
     // Do nothing
@@ -50,8 +50,8 @@ process.on('uncaughtException', (err) => {
   }
 });
 
-module.exports.disconnect = (cb) => {
-  mongoose.connection.close((err) => {
+module.exports.disconnect = (cb: (arg0: any) => any) => {
+  mongoose.connection.close((err: any) => {
     console.info(chalk.yellow('Disconnected from MongoDB.'));
     return cb(err);
   });
@@ -61,8 +61,8 @@ module.exports.disconnect = (cb) => {
  * @returns {{ value: T[]; top: number; skip: number; count: number }}
  */
 mongoose.Query.prototype.paginate = async function paginate({ top = 10, skip = 0 }) {
-  const t = isNaN(top) ? 10 : parseInt(top, 10);
-  const s = isNaN(skip) ? 10 : parseInt(skip, 10);
+  const t = isNaN(top) ? 10 : typeof top !== 'number' ? parseInt(top, 10) : top;
+  const s = isNaN(skip) ? 10 : typeof skip !== 'number' ? parseInt(skip, 10) : skip;
 
   if (t >= 0) {
     this.limit(t);

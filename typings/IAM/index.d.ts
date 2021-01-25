@@ -1,3 +1,5 @@
+import { IncomingMessage, OutgoingMessage } from 'http';
+
 declare namespace IAM {
   type Middleware = (
     /**
@@ -12,7 +14,7 @@ declare namespace IAM {
      * The callback
      */
     next: { (err: Error): void },
-  ) => Promise;
+  ) => Promise<any>;
 
   interface Main {
     /**

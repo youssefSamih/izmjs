@@ -1,14 +1,16 @@
 const _ = require('lodash');
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const chalk = require('chalk');
 
 const config = require('..');
 
-async function seed(collection, opts) {
+type collectionParam = { options?: any; model?: any; skip?: any; docs?: any };
+
+async function seed(collection: collectionParam, opts: any) {
   // Merge options with collection options
   const options = _.merge(opts || {}, collection.options || {});
 
-  const Model = mongoose.model(collection.model);
+  const Model: any = mongoose.model(collection.model);
   const { docs } = collection;
   const skipWhen = collection.skip ? collection.skip.when : null;
 
@@ -31,10 +33,10 @@ async function seed(collection, opts) {
     return results && results.length;
   }
 
-  async function seedDocuments(skipCollection_) {
-    function onComplete(responses) {
+  async function seedDocuments(skipCollection_: number | boolean) {
+    function onComplete(responses: any[]) {
       if (options.logResults) {
-        responses.forEach((response) => {
+        responses.forEach((response: { message: any }) => {
           if (response.message) {
             console.info(chalk.magenta(response.message));
           }
@@ -51,8 +53,8 @@ async function seed(collection, opts) {
     }
 
     const workload = docs
-      .filter((doc) => doc.data)
-      .map((doc) =>
+      .filter((doc: { data: any }) => doc.data)
+      .map((doc: { data: any; overwrite: any }) =>
         Model.seed(doc.data, {
           overwrite: doc.overwrite,
         }),
@@ -69,9 +71,9 @@ async function seed(collection, opts) {
   await seedDocuments(tmp);
 }
 
-function start(seedConfig) {
-  return new Promise((resolve, reject) => {
-    const seedConfigTmp = seedConfig || {};
+function start(seedConfig: {}) {
+  return new Promise<void>((resolve, reject) => {
+    const seedConfigTmp: any = seedConfig || {};
 
     const options =
       seedConfigTmp.options || (config.seedDB ? _.clone(config.seedDB.options, true) : {});
@@ -82,7 +84,7 @@ function start(seedConfig) {
       return resolve();
     }
 
-    const seeds = collections.filter((collection) => collection.model);
+    const seeds = collections.filter((collection: { model: any }) => collection.model);
 
     // Local Promise handlers
 
@@ -96,7 +98,7 @@ function start(seedConfig) {
       return resolve();
     }
 
-    function onError(err) {
+    function onError(err: any) {
       if (options.logResults) {
         console.info();
         console.info(chalk.bold.red('Database Seeding: Mongo Seed Failed!'));
@@ -110,7 +112,7 @@ function start(seedConfig) {
     // Use the reduction pattern to ensure we process seeding in desired order.
     // start with resolved promise for initial previous (p) item
     return seeds
-      .reduce((p, item) => p.then(() => seed(item, options)), Promise.resolve())
+      .reduce((p: Promise<any>, item: any) => p.then(() => seed(item, options)), Promise.resolve())
       .then(onSuccessComplete)
       .catch(onError);
   });

@@ -5,8 +5,8 @@ eslint-disable import/no-dynamic-require,global-require
 /**
  * Module dependencies.
  */
+import chalk from 'chalk';
 const _ = require('lodash');
-const chalk = require('chalk');
 const glob = require('glob');
 const { existsSync } = require('fs');
 const { resolve, join } = require('path');
@@ -19,32 +19,32 @@ const SKIP_MODULES = (process.env.SKIP_MODULES || '').split(',').filter(Boolean)
 /**
  * Get files by glob patterns
  */
-function getGlobbedPaths(globPatterns, excludes) {
+function getGlobbedPaths(globPatterns: string | any[], excludes?: any[] | undefined) {
   // URL paths regex
   const urlRegex = new RegExp('^(?:[a-z]+:)?//', 'i');
 
   // The output array
-  let output = [];
+  let output: any[] = [];
 
   // If glob pattern is array then we use each pattern in a recursive way, otherwise we use glob
-  if (_.isArray(globPatterns)) {
-    globPatterns.forEach((globPattern) => {
+  if (_.isArray(globPatterns) && typeof globPatterns === 'object') {
+    globPatterns.forEach((globPattern: any) => {
       output = _.union(output, getGlobbedPaths(globPattern, excludes));
     });
-  } else if (_.isString(globPatterns)) {
+  } else if (_.isString(globPatterns) && typeof globPatterns === 'string') {
     if (urlRegex.test(globPatterns)) {
       output.push(globPatterns);
     } else {
       let files = glob.sync(globPatterns);
       if (excludes) {
-        files = files.map((file) => {
+        files = files.map((file: string) => {
           let f = file;
           if (_.isArray(excludes)) {
-            excludes.forEach((e) => {
+            excludes.forEach((e: any) => {
               f = file.replace(e, '');
             });
           } else {
-            f = file.replace(excludes, '');
+            f = typeof excludes === 'string' ? file.replace(excludes, '') : '';
           }
           return f;
         });
@@ -84,7 +84,9 @@ function validateEnvironmentVariable() {
  * Validate Secure=true parameter can actually be turned on
  * because it requires certs and key files to be available
  */
-function validateSecureMode(config) {
+function validateSecureMode(config: {
+  secure: { ssl: boolean; privateKey: any; certificate: any };
+}) {
   if (!config.secure || config.secure.ssl !== true) {
     return true;
   }
@@ -113,7 +115,7 @@ function validateSecureMode(config) {
 /**
  * Validate Session Secret parameter is not set to default in production
  */
-function validateSessionSecret(config, testing) {
+function validateSessionSecret(config: { session: { secret: string } }, testing?: any) {
   if (process.env.NODE_ENV !== 'production') {
     return true;
   }
@@ -126,9 +128,7 @@ function validateSessionSecret(config, testing) {
         ),
       );
       debug(
-        chalk.red(
-          'Please add `SESSION_SECRET=super amazing secret` to `.env/.production.env`',
-        ),
+        chalk.red('Please add `SESSION_SECRET=super amazing secret` to `.env/.production.env`'),
       );
     }
     return false;
@@ -139,7 +139,10 @@ function validateSessionSecret(config, testing) {
 /**
  * Initialize global configuration files
  */
-function initGlobalConfigFiles(config, assets) {
+function initGlobalConfigFiles(
+  config: { files: { server: any } },
+  assets: { server?: any; modules?: any },
+) {
   const { modules } = assets;
 
   // Appending files
@@ -182,7 +185,7 @@ function initGlobalConfigFiles(config, assets) {
     Object.keys(server).forEach((attr) => {
       const current = server[attr];
       if (Array.isArray(current)) {
-        server[attr] = server[attr].filter((file) => {
+        server[attr] = server[attr].filter((file: string) => {
           const isToSkip = SKIP_MODULES.find((mName) => file.startsWith(mName));
           return !isToSkip;
         });
@@ -195,11 +198,11 @@ function initGlobalConfigFiles(config, assets) {
  * Load env files
  * @param {Object} assets All assets
  */
-function loadEnv(assets) {
+function loadEnv(assets: { server: { env: any } }) {
   const env = new Environment(process.env.NODE_ENV);
   const files = getGlobbedPaths(assets.server.env);
 
-  files.forEach((f) => {
+  files.forEach((f: any) => {
     const m = require(resolve(f));
     Object.keys(m).forEach((key) => {
       const { scope, schema, ...item } = m[key];
@@ -221,7 +224,7 @@ function loadEnv(assets) {
  * Merge modules configuration with the global configuration
  * @param {Object} config The current configuration
  */
-function mergeModulesConfig(config) {
+function mergeModulesConfig(config: { files: { server: { appConfigs: any } } }) {
   const { appConfigs } = config.files.server;
 
   let result = config;

@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const chalk = require('chalk');
+import chalk from 'chalk';
 const fileStreamRotator = require('file-stream-rotator');
 const fs = require('fs');
 const config = require('..');
@@ -21,7 +21,11 @@ function getLogFormat() {
 
     if (process.env.NODE_ENV !== 'test') {
       console.warn();
-      console.warn(chalk.yellow(`Warning: An invalid format was provided. The logger will use the default format of "${format}"`));
+      console.warn(
+        chalk.yellow(
+          `Warning: An invalid format was provided. The logger will use the default format of "${format}"`,
+        ),
+      );
       console.warn();
     }
   }
@@ -57,7 +61,9 @@ function getLogOptions() {
           });
         } else {
           // throw a new error so we can catch and handle it gracefully
-          throw new Error('An invalid fileName or directoryPath was provided for the rotating logs option.');
+          throw new Error(
+            'An invalid fileName or directoryPath was provided for the rotating logs option.',
+          );
         }
       } else if (options.stream.fileName.length && options.stream.directoryPath.length) {
         // create the WriteStream to use for the logs
@@ -66,9 +72,12 @@ function getLogOptions() {
           fs.mkdirSync(options.stream.directoryPath);
         }
 
-        options.stream = fs.createWriteStream(`${options.stream.directoryPath}/${config.log.options.stream.fileName}`, {
-          flags: 'a',
-        });
+        options.stream = fs.createWriteStream(
+          `${options.stream.directoryPath}/${config.log.options.stream.fileName}`,
+          {
+            flags: 'a',
+          },
+        );
       } else {
         // throw a new error so we can catch and handle it gracefully
         throw new Error('An invalid fileName or directoryPath was provided for stream option.');
@@ -79,7 +88,11 @@ function getLogOptions() {
 
       if (process.env.NODE_ENV !== 'test') {
         console.error();
-        console.error(chalk.red('An error has occured during the creation of the WriteStream. The stream option has been omitted.'));
+        console.error(
+          chalk.red(
+            'An error has occured during the creation of the WriteStream. The stream option has been omitted.',
+          ),
+        );
         console.error(chalk.red(err));
         console.error();
       }
