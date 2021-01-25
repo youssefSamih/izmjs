@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 
 dotenv.config({
   path: './.env/.common.env',
@@ -13,4 +13,4 @@ dotenv.config({
   path: `./.env/.${env}.env`,
 });
 
-require('module-alias/register');
+import 'module-alias/register';

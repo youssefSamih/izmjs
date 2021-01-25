@@ -103,7 +103,7 @@ function getLogOptions() {
 }
 
 // export the logger service
-module.exports = {
+export default {
   getFormat: getLogFormat, // log format to use
   getOptions: getLogOptions, // log options to use
 };

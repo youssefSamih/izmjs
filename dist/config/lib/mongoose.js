@@ -1,15 +1,19 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.disconnect = exports.connect = exports.loadModels = void 0;
 const chalk = require('chalk');
 const path = require('path');
 const mongoose = require('mongoose');
 const config = require('..');
-module.exports.loadModels = (callback) => {
+const loadModels = (callback) => {
     config.files.server.models.forEach((modelPath) => {
         require(path.resolve(modelPath));
     });
     if (callback)
         callback();
 };
-module.exports.connect = (callback) => {
+exports.loadModels = loadModels;
+const connect = (callback) => {
     mongoose.Promise = global.Promise;
     mongoose
         .connect(config.db.uri, Object.assign(Object.assign({}, config.db.options), { autoIndex: false, useFindAndModify: false, useUnifiedTopology: true }))
@@ -23,6 +27,7 @@ module.exports.connect = (callback) => {
         console.error(err);
     });
 };
+exports.connect = connect;
 process.on('uncaughtException', (err) => {
     console.error(err);
     if (err.name === 'MongoError' && err.codeName === 'DuplicateKey') {
@@ -31,12 +36,13 @@ process.on('uncaughtException', (err) => {
         process.exit(0);
     }
 });
-module.exports.disconnect = (cb) => {
+const disconnect = (cb) => {
     mongoose.connection.close((err) => {
         console.info(chalk.yellow('Disconnected from MongoDB.'));
         return cb(err);
     });
 };
+exports.disconnect = disconnect;
 mongoose.Query.prototype.paginate = async function paginate({ top = 10, skip = 0 }) {
     const t = isNaN(top) ? 10 : typeof top !== 'number' ? parseInt(top, 10) : top;
     const s = isNaN(skip) ? 10 : typeof skip !== 'number' ? parseInt(skip, 10) : skip;

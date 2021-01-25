@@ -1,11 +1,13 @@
+import cookieParser from 'cookie-parser';
+import { connection } from 'mongoose';
+import session from 'express-session';
+import passport from 'passport';
+import { resolve } from 'path';
+import connectMongo from 'connect-mongo';
+
 const redisAdapter = require('socket.io-redis');
-const cookieParser = require('cookie-parser');
-const { connection } = require('mongoose');
-const session = require('express-session');
 const socketio = require('socket.io');
-const passport = require('passport');
-const { resolve: resolv } = require('path');
-const MongoStore = require('connect-mongo')(session);
+const MongoStore = connectMongo(session);
 
 const conf = require('..');
 
@@ -21,7 +23,7 @@ Object.defineProperty(exports, 'io', {
 });
 
 // Define the Socket.io configuration method
-exports.init = (server: any) => {
+const init = (server: any) => {
   // Create a new Socket.io server
   io = socketio(server);
 
@@ -39,7 +41,7 @@ exports.init = (server: any) => {
   // Intercept Socket.io's handshake request
   io.use((socket, next) => {
     // Use the 'cookie-parser' module to parse the request cookies
-    cookieParser(conf.sessionSecret)(socket.request, {}, () => {
+    (cookieParser(conf.sessionSecret) as any)(socket.request, {}, () => {
       // Get the session id from the request cookies
       const sessionId = socket.request.signedCookies
         ? socket.request.signedCookies[conf.sessionKey]
@@ -62,7 +64,7 @@ exports.init = (server: any) => {
         s.request.session = sess;
 
         // Use Passport to populate the user details
-        return passport.initialize()(socket.request, {}, () => {
+        return (passport.initialize() as any)(socket.request, {}, () => {
           passport.session()(socket.request, {}, async () => {
             const { request: req } = socket;
 
@@ -79,17 +81,19 @@ exports.init = (server: any) => {
 
   conf.files.server.socketsConfig.forEach((c: any) => {
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    require(resolv(c))(io);
+    require(resolve(c))(io);
   });
 
   // Add an event listener to the 'connection' event
   io.on('connection', (socket) => {
     conf.files.server.sockets.forEach((c: any) => {
       // eslint-disable-next-line import/no-dynamic-require,global-require
-      require(resolv(c))(io, socket);
+      require(resolve(c))(io, socket);
     });
   });
 
   // return server;
   return server;
 };
+
+export default init;

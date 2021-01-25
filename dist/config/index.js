@@ -15,31 +15,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = __importDefault(require("chalk"));
-const _ = require('lodash');
-const glob = require('glob');
-const { existsSync } = require('fs');
-const { resolve, join } = require('path');
-const debug = require('debug')('app:config');
+const lodash_1 = __importDefault(require("lodash"));
+const glob_1 = __importDefault(require("glob"));
+const fs_1 = require("fs");
+const path_1 = require("path");
+const debug_1 = __importDefault(require("debug"));
+const debug = debug_1.default('app:config');
 const Environment = require('./lib/env-vars');
 const SKIP_MODULES = (process.env.SKIP_MODULES || '').split(',').filter(Boolean);
 function getGlobbedPaths(globPatterns, excludes) {
     const urlRegex = new RegExp('^(?:[a-z]+:)?//', 'i');
     let output = [];
-    if (_.isArray(globPatterns) && typeof globPatterns === 'object') {
+    if (lodash_1.default.isArray(globPatterns) && typeof globPatterns === 'object') {
         globPatterns.forEach((globPattern) => {
-            output = _.union(output, getGlobbedPaths(globPattern, excludes));
+            output = lodash_1.default.union(output, getGlobbedPaths(globPattern, excludes));
         });
     }
-    else if (_.isString(globPatterns) && typeof globPatterns === 'string') {
+    else if (lodash_1.default.isString(globPatterns) && typeof globPatterns === 'string') {
         if (urlRegex.test(globPatterns)) {
             output.push(globPatterns);
         }
         else {
-            let files = glob.sync(globPatterns);
+            let files = glob_1.default.sync(globPatterns);
             if (excludes) {
                 files = files.map((file) => {
                     let f = file;
-                    if (_.isArray(excludes)) {
+                    if (lodash_1.default.isArray(excludes)) {
                         excludes.forEach((e) => {
                             f = file.replace(e, '');
                         });
@@ -50,13 +51,13 @@ function getGlobbedPaths(globPatterns, excludes) {
                     return f;
                 });
             }
-            output = _.union(output, files);
+            output = lodash_1.default.union(output, files);
         }
     }
     return output;
 }
 function validateEnvironmentVariable() {
-    const environmentFiles = glob.sync(`./config/env/${process.env.NODE_ENV}.js`);
+    const environmentFiles = glob_1.default.sync(`./config/env/${process.env.NODE_ENV}.js`);
     if (!environmentFiles.length) {
         if (process.env.NODE_ENV) {
             console.error(chalk_1.default.red(`+ Error: No configuration file found for "${process.env.NODE_ENV}" environment using development instead`));
@@ -72,12 +73,12 @@ function validateSecureMode(config) {
     if (!config.secure || config.secure.ssl !== true) {
         return true;
     }
-    const privateKey = existsSync(resolve(config.secure.privateKey));
-    const certificate = existsSync(resolve(config.secure.certificate));
+    const privateKey = fs_1.existsSync(path_1.resolve(config.secure.privateKey));
+    const certificate = fs_1.existsSync(path_1.resolve(config.secure.certificate));
     if (!privateKey || !certificate) {
         debug(chalk_1.default.red('+ Error: Certificate file or key file is missing, falling back to non-SSL mode'));
         debug(chalk_1.default.red('  To create them, simply run the following from your shell: sh ./scripts/generate-ssl-certs.sh'));
-        _.merge(config.secure, {
+        lodash_1.default.merge(config.secure, {
             ssl: false,
         });
     }
@@ -98,7 +99,7 @@ function validateSessionSecret(config, testing) {
 }
 function initGlobalConfigFiles(config, assets) {
     const { modules } = assets;
-    _.merge(config, {
+    lodash_1.default.merge(config, {
         files: {
             server: {
                 modules,
@@ -131,7 +132,7 @@ function loadEnv(assets) {
     const env = new Environment(process.env.NODE_ENV);
     const files = getGlobbedPaths(assets.server.env);
     files.forEach((f) => {
-        const m = require(resolve(f));
+        const m = require(path_1.resolve(f));
         Object.keys(m).forEach((key) => {
             const _a = m[key], { scope, schema } = _a, item = __rest(_a, ["scope", "schema"]);
             env.set(Object.assign(Object.assign({}, item), { key }), schema, scope);
@@ -144,10 +145,10 @@ function mergeModulesConfig(config) {
     let result = config;
     if (Array.isArray(appConfigs)) {
         appConfigs.forEach((mPath) => {
-            const m = require(resolve(mPath));
+            const m = require(path_1.resolve(mPath));
             if (typeof m === 'function') {
                 const c = m(config);
-                result = _.defaultsDeep(result, c);
+                result = lodash_1.default.defaultsDeep(result, c);
             }
         });
     }
@@ -155,23 +156,23 @@ function mergeModulesConfig(config) {
 }
 function initGlobalConfig() {
     validateEnvironmentVariable();
-    const defaultAssets = require(join(process.cwd(), 'config/assets/default'));
-    const environmentAssets = require(join(process.cwd(), 'config/assets/', process.env.NODE_ENV)) || {};
-    const assets = _.merge(defaultAssets, environmentAssets);
+    const defaultAssets = require(path_1.join(process.cwd(), 'config/assets/default'));
+    const environmentAssets = require(path_1.join(process.cwd(), 'config/assets/', process.env.NODE_ENV || '')) || {};
+    const assets = lodash_1.default.merge(defaultAssets, environmentAssets);
     const env = loadEnv(assets);
-    const defaultConfig = require(join(process.cwd(), 'config/env/default'));
-    const environmentConfig = require(join(process.cwd(), 'config/env/', process.env.NODE_ENV)) || {};
+    const defaultConfig = require(path_1.join(process.cwd(), 'config/env/default'));
+    const environmentConfig = require(path_1.join(process.cwd(), 'config/env/', process.env.NODE_ENV || '')) || {};
     const utils = {
         getGlobbedPaths,
         validateSessionSecret,
         env,
     };
-    let config = _.merge({ utils }, defaultConfig, environmentConfig);
-    const pkg = require(resolve('./package.json'));
+    let config = lodash_1.default.merge({ utils }, defaultConfig, environmentConfig);
+    const pkg = require(path_1.resolve('./package.json'));
     config.pkg = pkg;
     if (process.env.NODE_ENV !== 'test') {
-        config = _.merge(config, (existsSync(join(process.cwd(), 'config/env/local.js')) &&
-            require(join(process.cwd(), 'config/env/local.js'))) ||
+        config = lodash_1.default.merge(config, (fs_1.existsSync(path_1.join(process.cwd(), 'config/env/local.js')) &&
+            require(path_1.join(process.cwd(), 'config/env/local.js'))) ||
             {});
     }
     initGlobalConfigFiles(config, assets);
@@ -180,5 +181,5 @@ function initGlobalConfig() {
     validateSessionSecret(config);
     return config;
 }
-module.exports = initGlobalConfig();
+exports.default = initGlobalConfig;
 //# sourceMappingURL=index.js.map

@@ -6,11 +6,13 @@ eslint-disable import/no-dynamic-require,global-require
  * Module dependencies.
  */
 import chalk from 'chalk';
-const _ = require('lodash');
-const glob = require('glob');
-const { existsSync } = require('fs');
-const { resolve, join } = require('path');
-const debug = require('debug')('app:config');
+import _ from 'lodash';
+import glob from 'glob';
+import { existsSync } from 'fs';
+import { resolve, join } from 'path';
+import debugImport from 'debug';
+
+const debug = debugImport('app:config');
 
 const Environment = require('./lib/env-vars');
 
@@ -260,7 +262,7 @@ function initGlobalConfig() {
 
   // Get the current assets
   const environmentAssets =
-    require(join(process.cwd(), 'config/assets/', process.env.NODE_ENV)) || {};
+    require(join(process.cwd(), 'config/assets/', process.env.NODE_ENV || '')) || {};
 
   // Merge assets
   const assets = _.merge(defaultAssets, environmentAssets);
@@ -272,7 +274,8 @@ function initGlobalConfig() {
   const defaultConfig = require(join(process.cwd(), 'config/env/default'));
 
   // Get the current config
-  const environmentConfig = require(join(process.cwd(), 'config/env/', process.env.NODE_ENV)) || {};
+  const environmentConfig =
+    require(join(process.cwd(), 'config/env/', process.env.NODE_ENV || '')) || {};
 
   // Expose configuration utilities
   const utils = {
@@ -319,4 +322,4 @@ function initGlobalConfig() {
 /**
  * Set configuration object
  */
-module.exports = initGlobalConfig();
+export default initGlobalConfig;

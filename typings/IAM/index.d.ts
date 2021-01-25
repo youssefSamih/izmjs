@@ -16,7 +16,7 @@ declare namespace IAM {
     next: { (err: Error): void },
   ) => Promise<any>;
 
-  interface Main {
+  export interface Main {
     /**
      * Set the prefix of the request
      */
@@ -94,6 +94,4 @@ declare namespace IAM {
      */
     description: string;
   }
-
-  export default Main;
 }

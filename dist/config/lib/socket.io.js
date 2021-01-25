@@ -1,27 +1,33 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const mongoose_1 = require("mongoose");
+const express_session_1 = __importDefault(require("express-session"));
+const passport_1 = __importDefault(require("passport"));
+const path_1 = require("path");
+const connect_mongo_1 = __importDefault(require("connect-mongo"));
 const redisAdapter = require('socket.io-redis');
-const cookieParser = require('cookie-parser');
-const { connection } = require('mongoose');
-const session = require('express-session');
 const socketio = require('socket.io');
-const passport = require('passport');
-const { resolve: resolv } = require('path');
-const MongoStore = require('connect-mongo')(session);
+const MongoStore = connect_mongo_1.default(express_session_1.default);
 const conf = require('..');
 let io;
 Object.defineProperty(exports, 'io', {
     get: () => io,
 });
-exports.init = (server) => {
+const init = (server) => {
     io = socketio(server);
     const mongoStore = new MongoStore({
         collection: conf.sessionCollection,
-        mongooseConnection: connection,
+        mongooseConnection: mongoose_1.connection,
     });
     if (conf.sockets.adapter === 'redis') {
         io.adapter(redisAdapter(conf.sockets.redisOptions));
     }
     io.use((socket, next) => {
-        cookieParser(conf.sessionSecret)(socket.request, {}, () => {
+        cookie_parser_1.default(conf.sessionSecret)(socket.request, {}, () => {
             const sessionId = socket.request.signedCookies
                 ? socket.request.signedCookies[conf.sessionKey]
                 : false;
@@ -38,8 +44,8 @@ exports.init = (server) => {
                 if (!sess)
                     return next(new Error(`session was not found for ${sessionId}`), false);
                 s.request.session = sess;
-                return passport.initialize()(socket.request, {}, () => {
-                    passport.session()(socket.request, {}, async () => {
+                return passport_1.default.initialize()(socket.request, {}, () => {
+                    passport_1.default.session()(socket.request, {}, async () => {
                         const { request: req } = socket;
                         if (req.user || conf.sockets.public) {
                             next(null, true);
@@ -53,13 +59,14 @@ exports.init = (server) => {
         });
     });
     conf.files.server.socketsConfig.forEach((c) => {
-        require(resolv(c))(io);
+        require(path_1.resolve(c))(io);
     });
     io.on('connection', (socket) => {
         conf.files.server.sockets.forEach((c) => {
-            require(resolv(c))(io, socket);
+            require(path_1.resolve(c))(io, socket);
         });
     });
     return server;
 };
+exports.default = init;
 //# sourceMappingURL=socket.io.js.map

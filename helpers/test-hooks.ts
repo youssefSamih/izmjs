@@ -3,7 +3,7 @@ process.env.NODE_ENV = 'test';
 process.env.DEBUG = '';
 process.env.ADMIN_VALIDATE = 'false';
 
-require('./polyfill');
+import './polyfill';
 
 type DataaseVar = { dropDatabase: (arg0: (err: any) => void) => void; databaseName: any };
 

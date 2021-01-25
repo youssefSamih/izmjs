@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const config = require('..');
 
 // Load the mongoose models
-module.exports.loadModels = (callback: () => void) => {
+export const loadModels = (callback: () => void) => {
   // Globbing model files
   config.files.server.models.forEach((modelPath: any) => {
     require(path.resolve(modelPath));
@@ -18,7 +18,7 @@ module.exports.loadModels = (callback: () => void) => {
 };
 
 // Initialize Mongoose
-module.exports.connect = (callback: (arg0: any) => void) => {
+export const connect = (callback: (arg0: any) => void) => {
   mongoose.Promise = global.Promise;
 
   mongoose
@@ -50,7 +50,7 @@ process.on('uncaughtException', (err: any) => {
   }
 });
 
-module.exports.disconnect = (cb: (arg0: any) => any) => {
+export const disconnect = (cb: (arg0: any) => any) => {
   mongoose.connection.close((err: any) => {
     console.info(chalk.yellow('Disconnected from MongoDB.'));
     return cb(err);

@@ -1,11 +1,13 @@
-const Ajv = require('ajv');
-const { model } = require('mongoose');
-const debug = require('debug')('boilerplate:helpers:utils');
-const { resolve } = require('path');
-const { readFile } = require('fs');
-const { promisify } = require('util');
-const ajvErrors = require('ajv-errors');
-const sockets = require('@config/lib/socket.io');
+import Ajv from 'ajv';
+import { model } from 'mongoose';
+import debugImport from 'debug';
+import { resolve } from 'path';
+import { readFile } from 'fs';
+import { promisify } from 'util';
+import ajvErrors from 'ajv-errors';
+import sockets from '@config/lib/socket.io';
+
+const debug = debugImport('boilerplate:helpers:utils');
 
 const roleCache: any = {};
 let excludeCache: any[];
@@ -22,17 +24,17 @@ type resParams = {
   };
 };
 
-type isExcluded = { iam: object; parents: any[] };
+type isExcludedType = { iam: object; parents: any[] };
 /**
  * Validates a payload with a given schema
  * @param {Object} schema The schema of the payload
  */
-exports.validate = (schema: object, type = 'body') =>
+export const validate = (schema: object, type = 'body') =>
   async function validateSchema(req: reqParams, res: resParams, next: () => any) {
     const ajv = new Ajv({ allErrors: true, jsonPointers: true });
     ajvErrors(ajv);
 
-    const validate = ajv.compile(schema);
+    const validate: any = ajv.compile(schema);
     let obj;
 
     switch (type) {
@@ -61,7 +63,7 @@ exports.validate = (schema: object, type = 'body') =>
  * Check current user has IAM
  * @param {Object} iam the IAM to check
  */
-exports.hasIAM = (iam: any) =>
+export const hasIAM = (iam: any) =>
   async function hasIAM(
     req: { iams: any },
     res: {
@@ -95,7 +97,7 @@ exports.hasIAM = (iam: any) =>
  * Gets the base URL of the request
  * @param {IncomingMessage} req The request
  */
-exports.getBaseURLFromRequest = (req: { get: (arg0: string) => any; protocol: any }) => {
+export const getBaseURLFromRequest = (req: { get: (arg0: string) => any; protocol: any }) => {
   const protocol = req.get('x-forwarded-proto') || req.protocol;
   return `${protocol}://${req.get('host')}`;
 };
@@ -106,7 +108,7 @@ exports.getBaseURLFromRequest = (req: { get: (arg0: string) => any; protocol: an
  * @param {Array} iams An array of IAM keys to affect to the current user
  * @param {String} name The name of the group to generate
  */
-exports.createUser = async (
+export const createUser = async (
   credentials = {
     username: 'username',
     password: 'jsI$Aw3$0m3',
@@ -130,15 +132,15 @@ exports.createUser = async (
   }
 
   try {
-    roleCache[name] = await new Role({
+    roleCache[name] = await (new Role({
       name,
       iams: list,
-    }).save({ new: true });
+    }) as any).save({ new: true });
   } catch (e) {
     debug(e);
   }
 
-  const user = await new User({
+  const user = await (new User({
     name: {
       first: 'Full',
       last: 'Name',
@@ -154,7 +156,7 @@ exports.createUser = async (
         validated: true,
       },
     ],
-  }).save({ new: true });
+  }) as any).save({ new: true });
 
   return user;
 };
@@ -163,7 +165,7 @@ exports.createUser = async (
  * Check an IAM if it is exluded or not
  * @param {Object} iam The IAM object
  */
-exports.isExcluded = async ({ iam, parents = [] }: isExcluded) => {
+export const isExcluded = async ({ iam, parents = [] }: isExcludedType) => {
   if (process.env.NODE_ENV === 'test') {
     return {
       found: false,
@@ -214,7 +216,7 @@ exports.isExcluded = async ({ iam, parents = [] }: isExcluded) => {
  * @param { Array[String] } roles List of roles
  * @param { Number } tries Number of tries
  */
-exports.addIamToRoles = async (iamName: any, roles = ['guest', 'user'], tries = 100) => {
+export const addIamToRoles = async (iamName: any, roles = ['guest', 'user'], tries = 100) => {
   const Role = model('Role');
   const Iam = model('IAM');
 
@@ -252,4 +254,4 @@ exports.addIamToRoles = async (iamName: any, roles = ['guest', 'user'], tries = 
   }, 100);
 };
 
-exports.getIO = () => sockets.io;
+export const getIO = () => (sockets as any).io;

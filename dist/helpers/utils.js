@@ -1,17 +1,24 @@
-const Ajv = require('ajv');
-const { model } = require('mongoose');
-const debug = require('debug')('boilerplate:helpers:utils');
-const { resolve } = require('path');
-const { readFile } = require('fs');
-const { promisify } = require('util');
-const ajvErrors = require('ajv-errors');
-const sockets = require('@config/lib/socket.io');
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getIO = exports.addIamToRoles = exports.isExcluded = exports.createUser = exports.getBaseURLFromRequest = exports.hasIAM = exports.validate = void 0;
+const ajv_1 = __importDefault(require("ajv"));
+const mongoose_1 = require("mongoose");
+const debug_1 = __importDefault(require("debug"));
+const path_1 = require("path");
+const fs_1 = require("fs");
+const util_1 = require("util");
+const ajv_errors_1 = __importDefault(require("ajv-errors"));
+const socket_io_1 = __importDefault(require("@config/lib/socket.io"));
+const debug = debug_1.default('boilerplate:helpers:utils');
 const roleCache = {};
 let excludeCache;
-const readFile$ = promisify(readFile);
-exports.validate = (schema, type = 'body') => async function validateSchema(req, res, next) {
-    const ajv = new Ajv({ allErrors: true, jsonPointers: true });
-    ajvErrors(ajv);
+const readFile$ = util_1.promisify(fs_1.readFile);
+const validate = (schema, type = 'body') => async function validateSchema(req, res, next) {
+    const ajv = new ajv_1.default({ allErrors: true, jsonPointers: true });
+    ajv_errors_1.default(ajv);
     const validate = ajv.compile(schema);
     let obj;
     switch (type) {
@@ -33,8 +40,9 @@ exports.validate = (schema, type = 'body') => async function validateSchema(req,
         })),
     });
 };
-exports.hasIAM = (iam) => async function hasIAM(req, res, next) {
-    const IAM = model('IAM');
+exports.validate = validate;
+const hasIAM = (iam) => async function hasIAM(req, res, next) {
+    const IAM = mongoose_1.model('IAM');
     const { iams } = req;
     let count;
     try {
@@ -50,17 +58,19 @@ exports.hasIAM = (iam) => async function hasIAM(req, res, next) {
     }
     return next(undefined);
 };
-exports.getBaseURLFromRequest = (req) => {
+exports.hasIAM = hasIAM;
+const getBaseURLFromRequest = (req) => {
     const protocol = req.get('x-forwarded-proto') || req.protocol;
     return `${protocol}://${req.get('host')}`;
 };
-exports.createUser = async (credentials = {
+exports.getBaseURLFromRequest = getBaseURLFromRequest;
+const createUser = async (credentials = {
     username: 'username',
     password: 'jsI$Aw3$0m3',
 }, iams = ['users:auth:signin'], name = 'role-tests', opts = {}) => {
-    const IAM = model('IAM');
-    const User = model('User');
-    const Role = model('Role');
+    const IAM = mongoose_1.model('IAM');
+    const User = mongoose_1.model('User');
+    const Role = mongoose_1.model('Role');
     const list = await IAM.find({
         iam: {
             $in: iams,
@@ -97,7 +107,8 @@ exports.createUser = async (credentials = {
     }).save({ new: true });
     return user;
 };
-exports.isExcluded = async ({ iam, parents = [] }) => {
+exports.createUser = createUser;
+const isExcluded = async ({ iam, parents = [] }) => {
     if (process.env.NODE_ENV === 'test') {
         return {
             found: false,
@@ -106,7 +117,7 @@ exports.isExcluded = async ({ iam, parents = [] }) => {
     if (!excludeCache) {
         let content = '';
         try {
-            content = await readFile$(resolve('.api.exclude'), { encoding: 'utf8' });
+            content = await readFile$(path_1.resolve('.api.exclude'), { encoding: 'utf8' });
         }
         catch (e) {
         }
@@ -135,9 +146,10 @@ exports.isExcluded = async ({ iam, parents = [] }) => {
         found: false,
     };
 };
-exports.addIamToRoles = async (iamName, roles = ['guest', 'user'], tries = 100) => {
-    const Role = model('Role');
-    const Iam = model('IAM');
+exports.isExcluded = isExcluded;
+const addIamToRoles = async (iamName, roles = ['guest', 'user'], tries = 100) => {
+    const Role = mongoose_1.model('Role');
+    const Iam = mongoose_1.model('IAM');
     let iam = await Iam.findOne({ iam: iamName });
     let counter = tries;
     const interval = setInterval(async () => {
@@ -165,5 +177,7 @@ exports.addIamToRoles = async (iamName, roles = ['guest', 'user'], tries = 100) 
         counter -= 1;
     }, 100);
 };
-exports.getIO = () => sockets.io;
+exports.addIamToRoles = addIamToRoles;
+const getIO = () => socket_io_1.default.io;
+exports.getIO = getIO;
 //# sourceMappingURL=utils.js.map

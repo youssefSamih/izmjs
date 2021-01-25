@@ -118,4 +118,4 @@ function start(seedConfig: {}) {
   });
 }
 
-exports.start = start;
+export default start;

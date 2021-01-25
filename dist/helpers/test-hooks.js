@@ -1,7 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 process.env.NODE_ENV = 'test';
 process.env.DEBUG = '';
 process.env.ADMIN_VALIDATE = 'false';
-require('./polyfill');
+require("./polyfill");
 const mongoos = require('../config/lib/mongoose');
 let dataBase;
 mongoos.loadModels();

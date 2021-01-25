@@ -3,16 +3,17 @@
 /**
  * Module dependencies.
  */
+import debugImport from 'debug';
+import http from 'http';
+import app from '../app';
 
-const debug = require('debug')('boilerplate:server');
-const http = require('http');
-const app = require('../app');
+const debug = debugImport('boilerplate:server');
 
 /**
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val) {
+function normalizePort(val: string) {
   const port = parseInt(val, 10);
 
   if (Number.isNaN(port)) {
@@ -45,14 +46,12 @@ const server = http.createServer(app);
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+function onError(error: { syscall: string, code: any }) {
   if (error.syscall !== 'listen') {
     throw error;
   }
 
-  const bind = typeof port === 'string'
-    ? `Pipe ${port}`
-    : `Port ${port}`;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -74,10 +73,8 @@ function onError(error) {
  */
 
 function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? `pipe ${addr}`
-    : `port ${addr.port}`;
+  const addr: any = server.address();
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
 }
 
